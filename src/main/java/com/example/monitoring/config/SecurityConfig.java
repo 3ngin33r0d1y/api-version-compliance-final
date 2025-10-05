@@ -79,9 +79,7 @@ public class SecurityConfig {
         cfg.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "http://127.0.0.1:5173",
-                "http://localhost:8080",
-                "https://xsf-api-version-monitoring-int-paris.afs.socgen/",
-                "https://xsf-api-version-monitoring-int-paris.afs.socgen:8443"
+                "http://localhost:8080"
         ));
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));

@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Routes, Route, useLocation, useNavigate, Navigate } from "react-router-dom";
 import Login from "./auth/Login";
 import AppShell from "./layout/AppShell";
-import { loadSession } from "@/lib/auth";
+import { loadSession } from "../lib/auth";
+import VersionHistoryModal from "../components/VersionHistoryModal";
 
 // Use your existing tab pages if you already have them.
 // Here are light placeholders; keep or replace with your real files.
@@ -24,6 +25,7 @@ function Protected({ children }: { children: React.ReactNode }) {
 
 export default function App() {
     const [ready, setReady] = useState(false);
+    const [versionHistoryModal, setVersionHistoryModal] = useState({ isOpen: false, apiId: null });
     const nav = useNavigate();
     const loc = useLocation();
 
@@ -36,30 +38,47 @@ export default function App() {
         setReady(true);
     }, [loc.pathname, nav]);
 
+    const openVersionHistory = (apiId: number) => {
+        setVersionHistoryModal({ isOpen: true, apiId });
+    };
+
+    const closeVersionHistory = () => {
+        setVersionHistoryModal({ isOpen: false, apiId: null });
+    };
+
     if (!ready) return null;
 
     return (
-        <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route
-                path="/*"
-                element={
-                    <Protected>
-                        <AppShell>
-                            <React.Suspense fallback={<div>Loading…</div>}>
-                                <Routes>
-                                    <Route path="/" element={<Dashboard />} />
-                                    <Route path="/compliance" element={<Compliance />} />
-                                    <Route path="/services" element={<Services />} />
-                                    <Route path="/apis" element={<AllApis />} />
-                                    <Route path="/projects" element={<Projects />} />
-                                    <Route path="/details" element={<ApiDetails />} />
-                                </Routes>
-                            </React.Suspense>
-                        </AppShell>
-                    </Protected>
-                }
+        <>
+            <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route
+                    path="/*"
+                    element={
+                        <Protected>
+                            <AppShell openVersionHistory={openVersionHistory}>
+                                <React.Suspense fallback={<div>Loading…</div>}>
+                                    <Routes>
+                                        <Route path="/" element={<Dashboard />} />
+                                        <Route path="/compliance" element={<Compliance />} />
+                                        <Route path="/services" element={<Services />} />
+                                        <Route path="/apis" element={<AllApis openVersionHistory={openVersionHistory} />} />
+                                        <Route path="/projects" element={<Projects openVersionHistory={openVersionHistory} />} />
+                                        <Route path="/details" element={<ApiDetails />} />
+                                    </Routes>
+                                </React.Suspense>
+                            </AppShell>
+                        </Protected>
+                    }
+                />
+            </Routes>
+
+            {/* Version History Modal */}
+            <VersionHistoryModal
+                apiId={versionHistoryModal.apiId}
+                isOpen={versionHistoryModal.isOpen}
+                onClose={closeVersionHistory}
             />
-        </Routes>
+        </>
     );
 }

@@ -62,16 +62,24 @@ public class ProjectRepository {
         return jdbc.query("SELECT * FROM apis ORDER BY created_at DESC", new ApiRow());
     }
 
+    public Api getApiById(Long apiId) {
+        try {
+            return jdbc.queryForObject("SELECT * FROM apis WHERE id = ?", new ApiRow(), apiId);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
     public long createProject(String name) {
-        org.springframework.jdbc.support.KeyHolder keyHolder = new org.springframework.jdbc.support.GeneratedKeyHolder();
-        jdbc.update(connection -> {
-            java.sql.PreparedStatement ps = connection.prepareStatement(
-                "INSERT INTO projects(name) VALUES (?)",
-                new String[] { "id" });
-            ps.setString(1, name);
-            return ps;
-        }, keyHolder);
-        return keyHolder.getKey().longValue();
+        try {
+            Long id = jdbc.queryForObject(
+                    "INSERT INTO projects(name) VALUES (?) RETURNING id",
+                    Long.class, name
+            );
+            return id != null ? id : 0L;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create project: " + e.getMessage(), e);
+        }
     }
 
     public int deleteProject(Long id) {
@@ -79,18 +87,15 @@ public class ProjectRepository {
     }
 
     public long addApi(Long projectId, String url, String environment, String region) {
-        org.springframework.jdbc.support.KeyHolder keyHolder = new org.springframework.jdbc.support.GeneratedKeyHolder();
-        jdbc.update(connection -> {
-            java.sql.PreparedStatement ps = connection.prepareStatement(
-                "INSERT INTO apis(project_id,url,environment,region) VALUES (?,?,?,?)",
-                new String[] { "id" });
-            ps.setLong(1, projectId);
-            ps.setString(2, url);
-            ps.setString(3, environment);
-            ps.setString(4, region);
-            return ps;
-        }, keyHolder);
-        return keyHolder.getKey().longValue();
+        try {
+            Long id = jdbc.queryForObject(
+                    "INSERT INTO apis(project_id,url,environment,region) VALUES (?,?,?,?) RETURNING id",
+                    Long.class, projectId, url, environment, region
+            );
+            return id != null ? id : 0L;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to add API: " + e.getMessage(), e);
+        }
     }
 
     public int updateApi(Long apiId, String url, String environment, String region) {
@@ -107,4 +112,3 @@ public class ProjectRepository {
                 status, responseTime, Timestamp.from(lastChecked), apiId);
     }
 }
-
